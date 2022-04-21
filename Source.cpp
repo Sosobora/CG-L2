@@ -4,19 +4,18 @@
 #include <glm/glm.hpp>
 
 GLuint VBO;
-//GLuint gWorldLocation;
-GLuint gScaleLocation; //GGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+GLuint gWorldLocation;
 
 static const char* pVS = "                                                          \n\
 #version 330                                                                        \n\
                                                                                     \n\
 layout (location = 0) in vec3 Position;                                             \n\
                                                                                     \n\
-uniform float gScale;                                                               \n\
+uniform mat4 gWorld;                                                                \n\
                                                                                     \n\
 void main()                                                                         \n\
 {                                                                                   \n\
-    gl_Position = vec4(gScale * Position.x, gScale * Position.y, Position.z, 1.0);  \n\
+    gl_Position = gWorld * vec4(Position, 0.5);                                     \n\
 }";
 
 static const char* pFS = "                                                    \n\
@@ -34,8 +33,7 @@ static void RenderSceneCB()
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	static float Scale = 0.0f;
-	Scale += 0.01f;
-	glUniform1f(gScaleLocation, sinf(Scale)); //GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
+	Scale += 0.001f;
 
 	glm::mat4 WorldRot
 	{
@@ -58,9 +56,9 @@ static void RenderSceneCB()
 		{0.0f, 0.0f, sinf(Scale), 0.0f},
 		{0.0f, 0.0f, 0.0f, 1.0f}
 	};
-	auto transformMat = WorldRot * WorldMov * WorldSc;
+	auto transformMat = WorldRot * WorldSc * WorldMov;
 
-	//glUniformMatrix4fv(gWorldLocation, 1, GL_TRUE, &transformMat[0][0]);
+	glUniformMatrix4fv(gWorldLocation, 1, GL_TRUE, &transformMat[0][0]);
 
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -125,10 +123,8 @@ void CompileShaders()
 	}
 	glUseProgram(ShaderProgram);
 
-	//gWorldLocation = glGetUniformLocation(ShaderProgram, "gWorld");
-	//assert(gWorldLocation != 0xFFFFFFFF);
-	gScaleLocation = glGetUniformLocation(ShaderProgram, "gScale");
-	assert(gScaleLocation != 0xFFFFFFFF);
+	gWorldLocation = glGetUniformLocation(ShaderProgram, "gWorld");
+	assert(gWorldLocation != 0xFFFFFFFF);
 }
 
 int main(int argc, char** argv)
